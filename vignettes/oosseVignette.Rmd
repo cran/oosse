@@ -1,0 +1,143 @@
+---
+title: Vignette of the oosse package
+author: Stijn Hawinkel
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    number_sections: true
+    keep_md: true
+vignette: >
+  %\VignetteIndexEntry{Vignette of the oosse package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Introduction
+
+This vignette demonstrates the use of the __oosse__ package for estimating for estimating the out-of-sample R² and its standard error through resampling algorithms, described in ["The out-of-sample R²: estimation and inference"]( 	
+https://doi.org/10.48550/arXiv.2302.05131) by Hawinkel et al. 2023.
+
+\setcounter{tocdepth}{5}
+\tableofcontents
+
+# Installation instructions
+
+```{r install, eval = FALSE}
+install.packages("oosse")
+```
+
+```{r load}
+library(oosse)
+```
+
+
+# Illustrative examples
+
+The _R2oosse_ function works with any pair of fitting and prediction functions. Here we illustrate a number of them, but any prediction function implemented in R can be used. The built-in dataset _Brassica_ is used, which contains _rlog_-transformed gene expression measurements for the 1,000 most expressed genes in the _Expr_ slot, as well as 5 outcome phenotypes in the _Pheno_ slot.
+
+```{r loadBrassica}
+data(Brassica)
+```
+
+## Linear model
+
+The fitting model must accept at least an outcome vector _y_ and a regressor matrix _x_:
+
+```{r linModelFit} 
+fitFunLM = function(y, x){lm.fit(y = y, x = cbind(1, x))}
+```
+
+The predictive model must accept arguments _mod_ (the fitted model) and _x_, the regressor matrix for a new set of observations.
+
+```{r linModelPredict} 
+predFunLM = function(mod, x) {cbind(1,x) %*% mod$coef}
+```
+
+Now that these functions have been defined, we apply the prediction model for leaf_8_width using the first 10 genes. Multithreading is used automatically using the _BiocParallel_ package. Change the following setup depending on your system.
+
+```{r multithread}
+library(BiocParallel)
+nCores = 2 # For cRAN build
+register(MulticoreParam(nCores))
+```
+
+Now estimate the $R^2$, also a rough estimate of the computation time is given. Remember to provide the cluster for multithreading.
+
+```{r LMpred}
+R2lm = R2oosse(y = Brassica$Pheno$Leaf_8_width, x = Brassica$Expr[, 1:10], 
+               fitFun = fitFunLM, predFun = predFunLM)
+```
+
+Estimates and standard error of the different components are now available.
+
+```{r lmests}
+#R2
+R2lm$R2
+#MSE
+R2lm$MSE
+#MST
+R2lm$MST
+```
+
+Also confidence intervals can be constructed:
+
+```{r confintlm}
+# R2
+buildConfInt(R2lm)
+#MSE, 90% confidence interval
+buildConfInt(R2lm, what = "MSE", conf = 0.9)
+```
+
+By default, cross-validation (CV) is used to estimate the MSE, and nonparametric bootstrapping is used to estimate the correlation between MSE and MST estimators. Other choices can be supplied though, e.g. for bootstrap .632 estimation of the MSE and jackknife estimation of the correlation:
+
+```{r lmBoot}
+R2lm632jn = R2oosse(y = Brassica$Pheno$Leaf_8_width, x = Brassica$Expr[, 1:10], 
+                    fitFun = fitFunLM, predFun = predFunLM, methodMSE = "bootstrap",
+                    methodCor = "jackknife")
+```
+
+## Regularised linear model
+
+For high-dimensional problems, such as the Brassica dataset, a regularised linear model is better suited to incorporate information for all genes. We use the _cv.glmnet_ function from the _glmnet_ package, which includes internal cross-validation for tuning the penalty parameter. Following custom function definitions are needed to fit in with the naming convention of the _oosse_ package.
+
+```{r reglinmod}
+fitFunReg = function(y, x, ...) {cv.glmnet(y = y, x = x, ...)}
+predFunReg = function(mod, x, ...){predict(mod, newx = x, ...)}
+```
+
+We adapt the parameter settings a bit to reduce computation time of the vignette.
+
+```{r reglinmodR2}
+if(require(glmnet)){
+    R2pen = R2oosse(y = Brassica$Pheno$Leaf_8_width, x = Brassica$Expr[, seq_len(5e1)], #Subset genes for speed
+                    nFolds = 4, cvReps = 1e2, nBootstrapsCor = 30,
+                        fitFun = fitFunReg, predFun = predFunReg, alpha = 1)#Lasso model
+    R2pen$R2
+}
+```
+
+## Random forest
+
+As a final example we use a random forest as a prediction model. We use the implementation from the _randomForest_ package.
+
+```{r predBart}
+if(require(randomForest)){
+    fitFunrf = function(y, x, ...){randomForest(y = y, x, ...)}
+    predFunrf = function(mod, x, ...){predict(mod, x, ...)}
+    R2rf = R2oosse(y = Brassica$Pheno$Leaf_8_width, x = Brassica$Expr[, seq_len(5e1)],
+                     nFolds = 4, cvReps = 1e2, nBootstrapsCor = 30,
+                        fitFun = fitFunrf, predFun = predFunrf)
+    R2rf$R2
+}
+```
+
+The $R^2$ estimate is comparable to that of the penalised regression model.
+
+# Session info
+
+```{r sessionInfo}
+sessionInfo()
+```
+
+\clearpage
+

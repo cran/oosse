@@ -2,9 +2,9 @@
 % Please edit documentation in R/buildConfInt.R
 \name{buildConfInt}
 \alias{buildConfInt}
-\title{Calculate a confidence interval for the R²}
+\title{Calculate a confidence interval for R², MSE and MST}
 \usage{
-buildConfInt(oosseObj, what = c("R2", "MSE"), conf = 0.95)
+buildConfInt(oosseObj, what = c("R2", "MSE", "MST"), conf = 0.95)
 }
 \arguments{
 \item{oosseObj}{The result of the R2oosse call}
@@ -14,14 +14,18 @@ buildConfInt(oosseObj, what = c("R2", "MSE"), conf = 0.95)
 \item{conf}{the confidence level required}
 }
 \value{
-A vector of length2 with lower and upper bound of the confidence interval
+A vector of length 2 with lower and upper bound of the confidence interval
 }
 \description{
-Calculate a confidence interval for the R²
+Calculate a confidence interval for R², MSE and MST
 }
 \details{
 The upper bound of the interval is truncated at 1 for the R² and
 the lower bound at 0 for the MSE
+
+The confidence intervals for R² and the MSE are based on standard errors and normal approximations.
+The confidence interval for the MST is based on the chi-squared distribution as in equation (16) of \insertCite{Harding2014}{oosse},
+but with inflation by a factor (n+1)/n. All quantities are out-of-sample.
 }
 \examples{
 data(Brassica)
@@ -31,6 +35,11 @@ R2lm = R2oosse(y = Brassica$Pheno$Leaf_8_width, x = Brassica$Expr[, 1:10],
 fitFun = fitFunLM, predFun = predFunLM, nFolds = 5)
 # A higher number of folds (e.g. 10) is recommended if computational resources allow
 buildConfInt(R2lm)
+buildConfInt(R2lm, what = "MSE")
+buildConfInt(R2lm, what = "MST")
+}
+\references{
+\insertAllCited{}
 }
 \seealso{
 \link{R2oosse}

@@ -15,7 +15,7 @@ predFunLM = function(mod, x) {cbind(1,x) %*% mod$coef}
 
 ## ----multithread--------------------------------------------------------------
 library(BiocParallel)
-nCores = 2 # For cRAN build
+nCores = 2 # For CRAN build
 register(MulticoreParam(nCores))
 
 ## ----LMpred-------------------------------------------------------------------
@@ -35,6 +35,8 @@ R2lm$MST
 buildConfInt(R2lm)
 #MSE, 90% confidence interval
 buildConfInt(R2lm, what = "MSE", conf = 0.9)
+#MST, based on chi-square distribution
+buildConfInt(R2lm, what = "MST")
 
 ## ----lmBoot-------------------------------------------------------------------
 R2lm632jn = R2oosse(y = Brassica$Pheno$Leaf_8_width, x = Brassica$Expr[, 1:10], 

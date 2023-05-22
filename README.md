@@ -1,20 +1,21 @@
 
 This repository demonstrates the use of the *oosse* package for
-estimating the out-of-sample R² and its standard error through
-resampling algorithms of the [corresponding
+estimating out-of-sample R² and its standard error through resampling
+algorithms of the [corresponding
 article](https://arxiv.org/abs/2302.05131). In this readme file, we
 provide installation instructions and basic usage examples, for more
 information and options see the package vignette and the help files.
 
 # Installation instructions
 
-As soon as the package is available on CRAN, it can be installed as:
+The *oosse* package can be installed from CRAN as:
 
 ``` r
-install.packages("oosse") #When available on CRAN
+install.packages("oosse")
 ```
 
-For now, installation from github is available.
+Alternatively, the latest (devel) version can be installed from github
+as follows.
 
 ``` r
 library(devtools)
@@ -67,8 +68,8 @@ nCores = 10
 register(MulticoreParam(nCores))
 ```
 
-Now estimate the $R^2$ while passing on the cluster object, also an
-estimate of the computation time is given.
+Now estimate $R^2$ while passing on the cluster object, also an estimate
+of the computation time is given.
 
 ``` r
 library(glmnet)
@@ -79,13 +80,13 @@ library(glmnet)
     ## Loaded glmnet 4.1-6
 
 ``` r
-R2pen = R2oosse(y = Brassica$Pheno$Leaf_8_width, x = Brassica$Expr[, seq_len(1e2)], 
+R2pen = R2oosse(y = Brassica$Pheno$Leaf_8_width, x = Brassica$Expr[, seq_len(1e2)],
                fitFun = fitFunReg, predFun = predFunReg, alpha = 1) #Lasso model
 ```
 
     ## Fitting and evaluating the model once took 0.07 seconds.
     ## You requested 200 repeats of 10-fold cross-validation with 10 cores, which is expected to last for roughly
-    ## 2 minutes and 25.55 seconds
+    ## 2 minutes and 27.6 seconds
 
 Estimates and standard error of the different components are now
 available.
@@ -132,6 +133,14 @@ buildConfInt(R2pen, what = "MSE", conf = 0.9)
     ##       5%      95% 
     ## 1.498743 2.762997
 
+``` r
+#MST
+buildConfInt(R2pen, what = "MST")
+```
+
+    ##     2.5%    97.5% 
+    ## 4.129867 8.446729
+
 By default, cross-validation (CV) is used to estimate the MSE, and
 nonparametric bootstrapping is used to estimate the correlation between
 MSE and MST estimators. Other parameters can be supplied though,
@@ -141,14 +150,14 @@ of the correlation:
 ``` r
 R2penBoot = R2oosse(y = Brassica$Pheno$Leaf_8_width, x = Brassica$Expr[, seq_len(1e2)],
                      methodMSE = "bootstrap", methodCor = "jackknife", fitFun = fitFunReg,
-                        predFun = predFunReg, alpha = 1, nBootstraps = 1e2, cl = cl)#Lasso model
+                        predFun = predFunReg, alpha = 1, nBootstraps = 1e2)#Lasso model
 ```
 
-    ## Fitting and evaluating the model once took 0.05 seconds.
+    ## Fitting and evaluating the model once took 0.06 seconds.
     ## You requested 100 .632 bootstrap instances with 10 cores, which is expected to last for roughly
-    ## 33.92 seconds
+    ## 37.12 seconds
 
-## Support vector machine
+## Random forest
 
 As a second example we use a random forest as a prediction model. We use
 the implementation from the *randomForest* package.
@@ -166,12 +175,12 @@ fitFunrf = function(y, x, ...){randomForest(y = y, x, ...)}
 predFunrf = function(mod, x, ...){predict(mod, x, ...)}
 R2rf = R2oosse(y = Brassica$Pheno$Leaf_8_width, x = Brassica$Expr[, seq_len(1e2)],
                  nFolds = 5, cvReps = 1e2, nBootstrapsCor = 30,
-                    fitFun = fitFunrf, predFun = predFunrf, cl = cl)
+                    fitFun = fitFunrf, predFun = predFunrf)
 ```
 
-    ## Fitting and evaluating the model once took 0.15 seconds.
+    ## Fitting and evaluating the model once took 0.16 seconds.
     ## You requested 100 repeats of 5-fold cross-validation with 10 cores, which is expected to last for roughly
-    ## 40.02 seconds
+    ## 41.34 seconds
 
 ``` r
 R2rf$R2

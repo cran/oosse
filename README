@@ -2,17 +2,17 @@
 output: github_document
 ---
 
-This repository demonstrates the use of the _oosse_ package for estimating the out-of-sample R² and its standard error through resampling algorithms of the [corresponding article](https://arxiv.org/abs/2302.05131). In this readme file, we provide installation instructions and basic usage examples, for more information and options see the package vignette and the help files.
+This repository demonstrates the use of the _oosse_ package for estimating out-of-sample R² and its standard error through resampling algorithms of the [corresponding article](https://arxiv.org/abs/2302.05131). In this readme file, we provide installation instructions and basic usage examples, for more information and options see the package vignette and the help files.
 
 # Installation instructions
 
-As soon as the package is available on CRAN, it can be installed as:
+The _oosse_ package can be installed from CRAN as:
 
 ```{r cran, eval = FALSE}
-install.packages("oosse") #When available on CRAN
+install.packages("oosse")
 ```
 
-For now, installation from github is available.
+Alternatively, the latest (devel) version can be installed from github as follows.
 
 ```{r github, eval = FALSE}
 library(devtools)
@@ -52,11 +52,11 @@ nCores = 10
 register(MulticoreParam(nCores))
 ```
 
-Now estimate the $R^2$ while passing on the cluster object, also an estimate of the computation time is given.
+Now estimate $R^2$ while passing on the cluster object, also an estimate of the computation time is given.
 
 ```{r LMpred}
 library(glmnet)
-R2pen = R2oosse(y = Brassica$Pheno$Leaf_8_width, x = Brassica$Expr[, seq_len(1e2)], 
+R2pen = R2oosse(y = Brassica$Pheno$Leaf_8_width, x = Brassica$Expr[, seq_len(1e2)],
                fitFun = fitFunReg, predFun = predFunReg, alpha = 1) #Lasso model
 ```
 
@@ -78,6 +78,8 @@ Also confidence intervals can be constructed:
 buildConfInt(R2pen)
 #MSE, 90% confidence interval
 buildConfInt(R2pen, what = "MSE", conf = 0.9)
+#MST
+buildConfInt(R2pen, what = "MST")
 ```
 
 By default, cross-validation (CV) is used to estimate the MSE, and nonparametric bootstrapping is used to estimate the correlation between MSE and MST estimators. Other parameters can be supplied though, e.g. for bootstrap .632 estimation of the MSE and jackknife estimation of the correlation:
@@ -85,10 +87,10 @@ By default, cross-validation (CV) is used to estimate the MSE, and nonparametric
 ```{r lmBoot}
 R2penBoot = R2oosse(y = Brassica$Pheno$Leaf_8_width, x = Brassica$Expr[, seq_len(1e2)],
                      methodMSE = "bootstrap", methodCor = "jackknife", fitFun = fitFunReg,
-                        predFun = predFunReg, alpha = 1, nBootstraps = 1e2, cl = cl)#Lasso model
+                        predFun = predFunReg, alpha = 1, nBootstraps = 1e2)#Lasso model
 ```
 
-## Support vector machine
+## Random forest
 
 As a second example we use a random forest as a prediction model. We use the implementation from the _randomForest_ package.
 
@@ -98,7 +100,7 @@ fitFunrf = function(y, x, ...){randomForest(y = y, x, ...)}
 predFunrf = function(mod, x, ...){predict(mod, x, ...)}
 R2rf = R2oosse(y = Brassica$Pheno$Leaf_8_width, x = Brassica$Expr[, seq_len(1e2)],
                  nFolds = 5, cvReps = 1e2, nBootstrapsCor = 30,
-                    fitFun = fitFunrf, predFun = predFunrf, cl = cl)
+                    fitFun = fitFunrf, predFun = predFunrf)
 R2rf$R2
 ```
 

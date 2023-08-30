@@ -62,8 +62,8 @@ Estimate out-of-sample R² and its standard error
 }
 \details{
 Implements the calculation of the R² and its standard error by \insertCite{Hawinkel2023}{oosse}.
- Multithreading is used as provided by the BiocParallel package,
-A rough estimate of expected computation time is printed when prinTimeEstimate is true, but this is purely indicative.
+Multithreading is used as provided by the BiocParallel or doParallel packages,
+A rough estimate of expected computation time is printed when printTimeEstimate is true, but this is purely indicative.
 The options to estimate the mean squared error (MSE) are cross-validation \insertCite{Bates2021}{oosse} or the .632 bootstrap \insertCite{Efron1997}{oosse}.
 }
 \examples{
@@ -73,8 +73,7 @@ fitFunLM = function(y, x){lm.fit(y = y, x = cbind(1, x))}
 predFunLM = function(mod, x) {cbind(1,x) \%*\% mod$coef}
 y = Brassica$Pheno$Leaf_8_width
 R2lm = R2oosse(y = Brassica$Pheno$Leaf_8_width, x = Brassica$Expr[, 1:10],
-fitFun = fitFunLM, predFun = predFunLM, nFolds = 5)
-# A higher number of folds (e.g. 10) is recommended if computational resources allow
+fitFun = fitFunLM, predFun = predFunLM, nFolds = 10)
 }
 \references{
 \insertAllCited{}

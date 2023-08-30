@@ -23,13 +23,15 @@
 #' \item{fullModel}{The model trained on the entire dataset using fitFun}
 #' \item{n}{The sample size of the training data}
 #' @export
+#' @import BiocParallel
 #' @importFrom methods formalArgs
 #' @importFrom stats cor sd var
-#' @importFrom BiocParallel bplapply multicoreWorkers
+#' @importFrom doParallel registerDoParallel
+#' @importFrom Rdpack reprompt
 #'
 #' @details Implements the calculation of the R² and its standard error by \insertCite{Hawinkel2023}{oosse}.
-#'  Multithreading is used as provided by the BiocParallel package,
-#' A rough estimate of expected computation time is printed when prinTimeEstimate is true, but this is purely indicative.
+#' Multithreading is used as provided by the BiocParallel or doParallel packages,
+#' A rough estimate of expected computation time is printed when printTimeEstimate is true, but this is purely indicative.
 #' The options to estimate the mean squared error (MSE) are cross-validation \insertCite{Bates2021}{oosse} or the .632 bootstrap \insertCite{Efron1997}{oosse}.
 #' @examples
 #' data(Brassica)
@@ -38,10 +40,8 @@
 #' predFunLM = function(mod, x) {cbind(1,x) %*% mod$coef}
 #' y = Brassica$Pheno$Leaf_8_width
 #' R2lm = R2oosse(y = Brassica$Pheno$Leaf_8_width, x = Brassica$Expr[, 1:10],
-#' fitFun = fitFunLM, predFun = predFunLM, nFolds = 5)
-#' # A higher number of folds (e.g. 10) is recommended if computational resources allow
+#' fitFun = fitFunLM, predFun = predFunLM, nFolds = 10)
 #' @seealso \link{buildConfInt}
-#' @importFrom Rdpack reprompt
 #' @references
 #'   \insertAllCited{}
 R2oosse = function(y, x, fitFun, predFun, methodMSE = c("CV", "bootstrap"), methodCor = c("nonparametric", "jackknife"), printTimeEstimate = TRUE,
@@ -52,6 +52,8 @@ R2oosse = function(y, x, fitFun, predFun, methodMSE = c("CV", "bootstrap"), meth
     methodCor = match.arg(methodCor)
     if((n <- length(y)) != NROW(x)){
         stop("Number of observations in y and x must match!")
+    } else if(NCOL(x) == 1){
+        x = matrix(x, nrow = n) #Convert to matrix if vector supplied
     }
     if(NCOL(y)!=1){
         stop("Outcome must be one-dimensional!")
@@ -73,9 +75,9 @@ R2oosse = function(y, x, fitFun, predFun, methodMSE = c("CV", "bootstrap"), meth
             switch(methodMSE,
                    "CV" = paste0(cvReps, " repeats of ", nFolds, "-fold cross-validation"),
                    "bootstrap" = paste(nBootstraps, ".632 bootstrap instances")),
-        " with ", nCores <- multicoreWorkers(), " cores, which is expected to last for roughly\n",
+        " with ", nCores <-  bpnworkers(bpparam()), " cores, which is expected to last for roughly\n",
         formatSeconds(sec <- (estMSEreps + estCorReps)*singleRunTime/nCores),
-        if(nCores==1 && (sec >10)) "\nConsider using multithreading with the 'BiocParallel' package to speed up computations.")
+        if(nCores==1 && (sec >10)) {"\nConsider using multithreading with the 'BiocParallel' package to speed up computations."}, "\n")
     }
     seVec = estMSE(y, x, fitFun, predFun, methodMSE, nFolds = nFolds, nInnerFolds = nInnerFolds, cvReps = cvReps, nBootstraps = nBootstraps)
     corMSEMST = estCorMSEMST(y, x, fitFun, predFun, methodMSE, methodCor, nBootstrapsCor, nFolds = nFolds, nBootstraps = nBootstraps)

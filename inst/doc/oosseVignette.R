@@ -52,6 +52,15 @@ R2lm632jn = R2oosse(y = Brassica$Pheno$Leaf_8_width, x = Brassica$Expr[, 1:5],
                     fitFun = fitFunLM, predFun = predFunLM, methodMSE = "bootstrap",
                     methodCor = "jackknife")
 
+## ----modelMatrix--------------------------------------------------------------
+#We construct a fake data frame also containing genotypes
+fakeDf = data.frame(Brassica$Expr[, 1:5], "genotype" = sample(c("Genotype1", "Genotype2", "Genotype3"), replace = TRUE, nrow(Brassica$Expr)))
+#Build the design matrix. The model.matrix variables automatically constructs dummy variables
+designMatrix = model.matrix(~ .  , data = fakeDf)[, -1] #Include no intercept as fitting function already does this
+#Now run oosse
+R2modMat = R2oosse(y = Brassica$Pheno$Leaf_8_width, x = designMatrix, 
+                    fitFun = fitFunLM, predFun = predFunLM)
+
 ## ----reglinmod----------------------------------------------------------------
 fitFunReg = function(y, x, ...) {cv.glmnet(y = y, x = x, ...)}
 predFunReg = function(mod, x, ...){predict(mod, newx = x, ...)}

@@ -1,7 +1,7 @@
 Package: oosse
 Type: Package
 Title: Out-of-Sample R² with Standard Error Estimation
-Version: 1.0.8
+Version: 1.0.10
 Authors@R: 
     c(person(given = "Stijn", family = "Hawinkel", 
     email = "stijn.hawinkel@psb.ugent.be", 
@@ -19,7 +19,7 @@ VignetteBuilder: knitr
 Depends: R (>= 4.2.0)
 BugReports: https://github.com/sthawinke/oosse
 NeedsCompilation: no
-Packaged: 2023-08-30 15:24:28 UTC; sthaw
+Packaged: 2023-09-22 08:58:52 UTC; sthaw
 Author: Stijn Hawinkel [cre, aut] (<https://orcid.org/0000-0002-4501-5180>)
 Repository: CRAN
-Date/Publication: 2023-08-30 15:50:02 UTC
+Date/Publication: 2023-09-22 09:20:02 UTC

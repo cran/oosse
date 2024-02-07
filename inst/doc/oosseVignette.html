@@ -360,7 +360,7 @@ Illustrative examples</a>
 <h1><span class="header-section-number">1</span> Introduction</h1>
 <p>This vignette demonstrates the use of the <strong>oosse</strong>
 package for estimating for estimating out-of-sample R² and its standard
-error through resampling algorithms, described in <a href="https://doi.org/10.48550/arXiv.2302.05131">“Out-of-sample R²:
+error through resampling algorithms, described in <a href="https://doi.org/10.1080/00031305.2023.2216252">“Out-of-sample R²:
 estimation and inference”</a> by Hawinkel et al. 2023.</p>
 </div>
 <div id="installation-instructions" class="section level1" number="2">
@@ -418,11 +418,11 @@ available.</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co">#R2</span></span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>R2lm<span class="sc">$</span>R2</span></code></pre></div>
 <pre><code>##        R2      R2SE 
-## 0.4832506 0.1151979</code></pre>
+## 0.4830960 0.1234188</code></pre>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co">#MSE</span></span>
 <span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>R2lm<span class="sc">$</span>MSE</span></code></pre></div>
 <pre><code>##       MSE     MSESE 
-## 2.9554375 0.4792718</code></pre>
+## 2.9563220 0.4768678</code></pre>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co">#MST</span></span>
 <span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>R2lm<span class="sc">$</span>MST</span></code></pre></div>
 <pre><code>##      MST    MSTSE 
@@ -431,11 +431,11 @@ available.</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="co"># R2</span></span>
 <span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="fu">buildConfInt</span>(R2lm)</span></code></pre></div>
 <pre><code>##      2.5%     97.5% 
-## 0.2574668 0.7090344</code></pre>
+## 0.2411996 0.7249923</code></pre>
 <div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="co">#MSE, 90% confidence interval</span></span>
 <span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="fu">buildConfInt</span>(R2lm, <span class="at">what =</span> <span class="st">&quot;MSE&quot;</span>, <span class="at">conf =</span> <span class="fl">0.9</span>)</span></code></pre></div>
 <pre><code>##       5%      95% 
-## 2.167106 3.743769</code></pre>
+## 2.171944 3.740700</code></pre>
 <div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="co">#MST, based on chi-square distribution</span></span>
 <span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a><span class="fu">buildConfInt</span>(R2lm, <span class="at">what =</span> <span class="st">&quot;MST&quot;</span>)</span></code></pre></div>
 <pre><code>##     2.5%    97.5% 
@@ -450,7 +450,7 @@ correlation:</p>
 <span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a>                    <span class="at">methodCor =</span> <span class="st">&quot;jackknife&quot;</span>)</span></code></pre></div>
 <pre><code>## Fitting and evaluating the model once took 0 seconds.
 ## You requested 200 .632 bootstrap instances with 2 cores, which is expected to last for roughly
-## 19.2 seconds</code></pre>
+## 12.8 seconds</code></pre>
 <p>Supplying a dataframe with predictor variables is not allowed. The
 user is asked to build the design matrix yourself with model.matrix
 prior to calling <em>R2oosse</em>:</p>
@@ -463,7 +463,7 @@ prior to calling <em>R2oosse</em>:</p>
 <span id="cb23-7"><a href="#cb23-7" tabindex="-1"></a>                    <span class="at">fitFun =</span> fitFunLM, <span class="at">predFun =</span> predFunLM)</span></code></pre></div>
 <pre><code>## Fitting and evaluating the model once took 0 seconds.
 ## You requested 200 repeats of 10-fold cross-validation with 2 cores, which is expected to last for roughly
-## 0 seconds</code></pre>
+## 10.25 seconds</code></pre>
 </div>
 <div id="regularised-linear-model" class="section level2" number="3.2">
 <h2><span class="header-section-number">3.2</span> Regularised linear
@@ -493,12 +493,12 @@ replicates.</p>
 <span id="cb26-10"><a href="#cb26-10" tabindex="-1"></a>}</span></code></pre></div>
 <pre><code>## Loading required package: glmnet</code></pre>
 <pre><code>## Loading required package: Matrix</code></pre>
-<pre><code>## Loaded glmnet 4.1-7</code></pre>
-<pre><code>## Fitting and evaluating the model once took 0.06 seconds.
+<pre><code>## Loaded glmnet 4.1-8</code></pre>
+<pre><code>## Fitting and evaluating the model once took 0.05 seconds.
 ## You requested 100 repeats of 5-fold cross-validation with 2 cores, which is expected to last for roughly
-## 1 minutes and 21 seconds</code></pre>
-<pre><code>##         R2       R2SE 
-## 0.62872596 0.09354877</code></pre>
+## 1 minutes and 11.55 seconds</code></pre>
+<pre><code>##        R2      R2SE 
+## 0.6360594 0.0977301</code></pre>
 </div>
 <div id="random-forest" class="section level2" number="3.3">
 <h2><span class="header-section-number">3.3</span> Random forest</h2>
@@ -520,9 +520,9 @@ use the implementation from the <em>randomForest</em> package.</p>
 <pre><code>## Type rfNews() to see new features/changes/bug fixes.</code></pre>
 <pre><code>## Fitting and evaluating the model once took 0.05 seconds.
 ## You requested 100 repeats of 5-fold cross-validation with 2 cores, which is expected to last for roughly
-## 1 minutes and 8.85 seconds</code></pre>
-<pre><code>##        R2      R2SE 
-## 0.6981843 0.0816148</code></pre>
+## 1 minutes and 3.45 seconds</code></pre>
+<pre><code>##         R2       R2SE 
+## 0.69839009 0.08881258</code></pre>
 <div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" tabindex="-1"></a><span class="cf">if</span>(onWindows){</span>
 <span id="cb38-2"><a href="#cb38-2" tabindex="-1"></a>    <span class="fu">stopCluster</span>(Clus)</span>
 <span id="cb38-3"><a href="#cb38-3" tabindex="-1"></a>}</span></code></pre></div>
@@ -533,7 +533,7 @@ to that of the penalised regression model.</p>
 <div id="session-info" class="section level1" number="4">
 <h1><span class="header-section-number">4</span> Session info</h1>
 <div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
-<pre><code>## R version 4.3.1 (2023-06-16)
+<pre><code>## R version 4.3.2 (2023-10-31)
 ## Platform: x86_64-pc-linux-gnu (64-bit)
 ## Running under: Ubuntu 22.04.3 LTS
 ## 
@@ -556,18 +556,19 @@ to that of the penalised regression model.</p>
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] randomForest_4.7-1.1 glmnet_4.1-7         Matrix_1.6-0        
-## [4] BiocParallel_1.34.2  oosse_1.0.10        
+## [1] randomForest_4.7-1.1 glmnet_4.1-8         Matrix_1.6-5        
+## [4] BiocParallel_1.36.0  oosse_1.0.11        
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] doParallel_1.0.17 cli_3.6.1         knitr_1.43        rlang_1.1.1      
-##  [5] xfun_0.39         jsonlite_1.8.7    htmltools_0.5.5   sass_0.4.7       
-##  [9] rmarkdown_2.23    grid_4.3.1        evaluate_0.21     jquerylib_0.1.4  
-## [13] fastmap_1.1.1     yaml_2.3.7        foreach_1.5.2     compiler_4.3.1   
-## [17] codetools_0.2-19  Rcpp_1.0.11       rstudioapi_0.15.0 lattice_0.21-8   
-## [21] digest_0.6.33     R6_2.5.1          splines_4.3.1     shape_1.4.6      
-## [25] Rdpack_2.4        parallel_4.3.1    rbibutils_2.2.13  bslib_0.5.0      
-## [29] tools_4.3.1       iterators_1.0.14  survival_3.5-5    cachem_1.0.8</code></pre>
+##  [1] doParallel_1.0.17 cli_3.6.2         knitr_1.45        rlang_1.1.3      
+##  [5] xfun_0.41         jsonlite_1.8.8    htmltools_0.5.7   sass_0.4.8       
+##  [9] rmarkdown_2.25    grid_4.3.2        evaluate_0.23     jquerylib_0.1.4  
+## [13] fastmap_1.1.1     yaml_2.3.8        foreach_1.5.2     lifecycle_1.0.4  
+## [17] compiler_4.3.2    codetools_0.2-19  Rcpp_1.0.12       rstudioapi_0.15.0
+## [21] lattice_0.22-5    digest_0.6.34     R6_2.5.1          splines_4.3.2    
+## [25] shape_1.4.6       Rdpack_2.6        parallel_4.3.2    rbibutils_2.2.16 
+## [29] bslib_0.6.1       tools_4.3.2       iterators_1.0.14  survival_3.5-7   
+## [33] cachem_1.0.8</code></pre>
 </div>
 
 

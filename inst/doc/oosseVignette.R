@@ -1,5 +1,5 @@
 ## ----install, eval = FALSE----------------------------------------------------
-#  install.packages("oosse")
+# install.packages("oosse")
 
 ## ----load---------------------------------------------------------------------
 library(oosse)

@@ -9,26 +9,26 @@
 #' @references
 #'   \insertAllCited{}
 estMSE = function(y, x, fitFun, predFun, methodMSE, nFolds, nInnerFolds,
-                  cvReps, nBootstraps){
+                  cvReps, nBootstraps, ...){
         n <- length(y)
         seVec =  if(methodMSE == "CV"){
             #Nested cross-validation
-            unFolds <- seq_len(nFolds);unFoldsIn <- seq_len(nInnerFolds) #Prepare the folds
+            unFolds <- seq_len(nFolds) #Prepare the folds
             cvSplitReps = bplapply(seq_len(cvReps), function(cvs){
                 folds = sample(rep(unFolds, length.out = n))
                 lapply(unFolds, function(uf){
                     #Outer loop
                     idTrain = folds!=uf
-                    modTrain = fitFun(y[idTrain], x[idTrain,,drop = FALSE])
-                    predTest = predFun(modTrain, x[!idTrain, , drop = FALSE])
+                    modTrain = fitFun(y[idTrain], x[idTrain,,drop = FALSE], ...)
+                    predTest = predFun(modTrain, x[!idTrain, , drop = FALSE], ...)
                     eOut = (predTest-y[!idTrain])^2
                     #Inner loop
-                    inFolds = sample(rep(unFoldsIn, length.out = sum(idTrain)))
-                    eIn =  lapply(unFoldsIn, function(inf){
-                        idTrainIn = inFolds!=inf
-                        modTrain = fitFun(y[idTrainIn], x[idTrainIn,,drop = FALSE])
-                        predTest = predFun(modTrain, x[!idTrainIn, , drop = FALSE])
-                        (predTest-y[!idTrainIn])^2
+                    eIn = lapply(setdiff(folds, uf), function(inf){
+                        idTrainOut = folds==inf
+                        idTrainIn = !idTrainOut & idTrain
+                        modTrain = fitFun(y[idTrainIn], x[idTrainIn,,drop = FALSE], ...)
+                        predTest = predFun(modTrain, x[idTrainOut, , drop = FALSE], ...)
+                        (predTest-y[idTrainOut])^2
                     })
                     #summary statistics
                     errHatTilde = mean(unlist(eIn))
@@ -42,9 +42,9 @@ estMSE = function(y, x, fitFun, predFun, methodMSE, nFolds, nInnerFolds,
             bootReps = bplapply(seq_len(nBootstraps), function(br){
                 id = sample(n, replace = TRUE)
                 #.632 bootstrap
-                MSE632est = boot632(y, x, id, fitFun, predFun)
+                MSE632est = boot632(y, x, id, fitFun, predFun, ...)
                 #Out of bag bootstrap
-                oob = bootOob(y, x, id, fitFun, predFun)
+                oob = bootOob(y, x, id, fitFun, predFun, ...)
                 list("oobObj" = oob, "MSE632est" = MSE632est)
             })
             MSE632est = mean(vapply(FUN.VALUE = double(1), bootReps, function(x) {x$MSE632est}))

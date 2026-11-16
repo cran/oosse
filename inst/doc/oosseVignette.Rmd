@@ -58,23 +58,23 @@ Now that these functions have been defined, we apply the prediction model for le
 ```{r multithread}
 nCores = 2 # For CRAN build max 2
 library(BiocParallel)
-if(.Platform$OS.type == "unix"){
-    #On unix-based systems, use MulticoreParam
-    register(MulticoreParam(nCores))
+param <- if (.Platform$OS.type == "unix") {
+    # On unix-based systems (linux and macOS), use MulticoreParam
+    MulticoreParam(nCores, stop.on.error = FALSE)
 } else {
-    #On windows, use makeCluster
-    library(doParallel)
-    Clus = makeCluster(nCores)
-    registerDoParallel(Clus)
-    register(DoparParam(), default = TRUE)
+    # On windows, build vignette without multithreading
+    SerialParam(stop.on.error = FALSE)
 }
+register(param)
 ```
 
-Now estimate out-of-sample $R^2$, also a rough estimate of the computation time is given. Remember to provide the cluster for multithreading.
+Now estimate out-of-sample $R^2$, also a rough estimate of the computation time is given. Remember to provide the cluster for multithreading. We limit the number of bootstrap and cross-validation instances here to limit compile time of the vignette. For a real analysis we recommend the default values.
 
 ```{r LMpred}
+nFolds = 5; cvReps = 1e2; nBoots = 3e1;cvRepsCor = 5L
 R2lm = R2oosse(y = Brassica$Pheno$Leaf_8_width, x = Brassica$Expr[, 1:5], 
-               fitFun = fitFunLM, predFun = predFunLM)
+               fitFun = fitFunLM, predFun = predFunLM, nFolds = nFolds, 
+               cvReps = cvReps, nBootstrapsCor = nBoots, cvRepsCor = cvRepsCor)
 ```
 
 Estimates and standard error of the different components are now available.
@@ -101,10 +101,11 @@ buildConfInt(R2lm, what = "MST")
 
 By default, cross-validation (CV) is used to estimate the MSE, and nonparametric bootstrapping is used to estimate the correlation between MSE and MST estimators. Other choices can be supplied though, e.g. for bootstrap .632 estimation of the MSE and jackknife estimation of the correlation:
 
-```{r lmBoot}
+```{r lmBoot, eval = FALSE}
 R2lm632jn = R2oosse(y = Brassica$Pheno$Leaf_8_width, x = Brassica$Expr[, 1:5], 
                     fitFun = fitFunLM, predFun = predFunLM, methodMSE = "bootstrap",
-                    methodCor = "jackknife")
+                    methodCor = "jackknife", nFolds = nFolds, cvReps = cvReps, 
+                    nBootstrapsCor = nBoots, cvRepsCor = cvRepsCor)
 ```
 
 Supplying a dataframe with predictor variables is not allowed. The user is asked to build the design matrix yourself with model.matrix prior to calling _R2oosse_:
@@ -116,9 +117,9 @@ fakeDf = data.frame(Brassica$Expr[, 1:5], "genotype" = sample(c("Genotype1", "Ge
 designMatrix = model.matrix(~ .  , data = fakeDf)[, -1] #Include no intercept as fitting function already does this
 #Now run oosse
 R2modMat = R2oosse(y = Brassica$Pheno$Leaf_8_width, x = designMatrix, 
-                    fitFun = fitFunLM, predFun = predFunLM)
+                   nFolds = nFolds, cvReps = cvReps, nBootstrapsCor = nBoots, 
+               cvRepsCor = cvRepsCor, fitFun = fitFunLM, predFun = predFunLM)
 ```
-
 
 ## Regularised linear model
 
@@ -132,13 +133,10 @@ predFunReg = function(mod, x, ...){predict(mod, newx = x, ...)}
 We adapt the parameter settings a bit to reduce computation time of the vignette, it is recommended to use 10-fold cross-validation, at least 200 repeats of the cross-validation splits and 50 bootstrap replicates.
 
 ```{r reglinmodR2}
-nFolds = 5; cvReps = 1e2; nBoots = 4e1;numFeat = 25
+numFeat = 20;
 if(require(glmnet)){
-    if(onWindows <- (.Platform$OS.type == "windows")){
-        clusterEvalQ(Clus, require(glmnet))
-    }
     R2pen = R2oosse(y = Brassica$Pheno$Leaf_8_width, x = Brassica$Expr[, seq_len(numFeat)], #Subset genes for speed
-                    nFolds = nFolds, cvReps = cvReps, nBootstrapsCor = nBoots,
+                    nFolds = nFolds, cvReps = cvReps, nBootstrapsCor = nBoots, cvRepsCor = cvRepsCor,
                         fitFun = fitFunReg, predFun = predFunReg, alpha = 1)#Lasso model
     R2pen$R2
 }
@@ -150,18 +148,12 @@ As a final example we use a random forest as a prediction model. We use the impl
 
 ```{r predRf}
 if(require(randomForest)){
-   if(onWindows){
-        clusterEvalQ(Clus, require(randomForest))
-    }
     fitFunrf = function(y, x, ...){randomForest(y = y, x, ...)}
     predFunrf = function(mod, x, ...){predict(mod, x, ...)}
     R2rf = R2oosse(y = Brassica$Pheno$Leaf_8_width, x = Brassica$Expr[, seq_len(numFeat)],
                      nFolds = nFolds, cvReps = cvReps, nBootstrapsCor = nBoots,
-                        fitFun = fitFunrf, predFun = predFunrf)
+                   cvRepsCor = cvRepsCor, fitFun = fitFunrf, predFun = predFunrf)
     R2rf$R2
-}
-if(onWindows){
-    stopCluster(Clus)
 }
 ```
 

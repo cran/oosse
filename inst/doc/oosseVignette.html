@@ -396,34 +396,36 @@ automatically using the <em>BiocParallel</em> package. Change the
 following setup depending on your system.</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>nCores <span class="ot">=</span> <span class="dv">2</span> <span class="co"># For CRAN build max 2</span></span>
 <span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">library</span>(BiocParallel)</span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="cf">if</span>(.Platform<span class="sc">$</span>OS.type <span class="sc">==</span> <span class="st">&quot;unix&quot;</span>){</span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>    <span class="co">#On unix-based systems, use MulticoreParam</span></span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>    <span class="fu">register</span>(<span class="fu">MulticoreParam</span>(nCores))</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>param <span class="ot">&lt;-</span> <span class="cf">if</span> (.Platform<span class="sc">$</span>OS.type <span class="sc">==</span> <span class="st">&quot;unix&quot;</span>) {</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>    <span class="co"># On unix-based systems (linux and macOS), use MulticoreParam</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>    <span class="fu">MulticoreParam</span>(nCores, <span class="at">stop.on.error =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>} <span class="cf">else</span> {</span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>    <span class="co">#On windows, use makeCluster</span></span>
-<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>    <span class="fu">library</span>(doParallel)</span>
-<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>    Clus <span class="ot">=</span> <span class="fu">makeCluster</span>(nCores)</span>
-<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>    <span class="fu">registerDoParallel</span>(Clus)</span>
-<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>    <span class="fu">register</span>(<span class="fu">DoparParam</span>(), <span class="at">default =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>}</span></code></pre></div>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>    <span class="co"># On windows, build vignette without multithreading</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>    <span class="fu">SerialParam</span>(<span class="at">stop.on.error =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>}</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="fu">register</span>(param)</span></code></pre></div>
 <p>Now estimate out-of-sample <span class="math inline">\(R^2\)</span>,
 also a rough estimate of the computation time is given. Remember to
-provide the cluster for multithreading.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>R2lm <span class="ot">=</span> <span class="fu">R2oosse</span>(<span class="at">y =</span> Brassica<span class="sc">$</span>Pheno<span class="sc">$</span>Leaf_8_width, <span class="at">x =</span> Brassica<span class="sc">$</span>Expr[, <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>], </span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>               <span class="at">fitFun =</span> fitFunLM, <span class="at">predFun =</span> predFunLM)</span></code></pre></div>
+provide the cluster for multithreading. We limit the number of bootstrap
+and cross-validation instances here to limit compile time of the
+vignette. For a real analysis we recommend the default values.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>nFolds <span class="ot">=</span> <span class="dv">5</span>; cvReps <span class="ot">=</span> <span class="fl">1e2</span>; nBoots <span class="ot">=</span> <span class="fl">3e1</span>;cvRepsCor <span class="ot">=</span> <span class="dv">5</span><span class="dt">L</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>R2lm <span class="ot">=</span> <span class="fu">R2oosse</span>(<span class="at">y =</span> Brassica<span class="sc">$</span>Pheno<span class="sc">$</span>Leaf_8_width, <span class="at">x =</span> Brassica<span class="sc">$</span>Expr[, <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>], </span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>               <span class="at">fitFun =</span> fitFunLM, <span class="at">predFun =</span> predFunLM, <span class="at">nFolds =</span> nFolds, </span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>               <span class="at">cvReps =</span> cvReps, <span class="at">nBootstrapsCor =</span> nBoots, <span class="at">cvRepsCor =</span> cvRepsCor)</span></code></pre></div>
 <pre><code>## Fitting and evaluating the model once took 0 seconds.
-## You requested 200 repeats of 10-fold cross-validation with 2 cores, which is expected to last for roughly
-## 10.25 seconds</code></pre>
+## You requested 100 repeats of 5-fold cross-validation with 2 cores, which is expected to last for roughly
+## 0 seconds</code></pre>
 <p>Estimates and standard error of the different components are now
 available.</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co">#R2</span></span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>R2lm<span class="sc">$</span>R2</span></code></pre></div>
 <pre><code>##        R2      R2SE 
-## 0.4831496 0.1087965</code></pre>
+## 0.4860206 0.1502268</code></pre>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co">#MSE</span></span>
 <span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>R2lm<span class="sc">$</span>MSE</span></code></pre></div>
 <pre><code>##       MSE     MSESE 
-## 2.9560150 0.4779761</code></pre>
+## 2.9395949 0.6936727</code></pre>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co">#MST</span></span>
 <span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>R2lm<span class="sc">$</span>MST</span></code></pre></div>
 <pre><code>##      MST    MSTSE 
@@ -432,11 +434,11 @@ available.</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="co"># R2</span></span>
 <span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="fu">buildConfInt</span>(R2lm)</span></code></pre></div>
 <pre><code>##      2.5%     97.5% 
-## 0.2699123 0.6963869</code></pre>
+## 0.1915816 0.7804597</code></pre>
 <div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="co">#MSE, 90% confidence interval</span></span>
 <span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="fu">buildConfInt</span>(R2lm, <span class="at">what =</span> <span class="st">&quot;MSE&quot;</span>, <span class="at">conf =</span> <span class="fl">0.9</span>)</span></code></pre></div>
 <pre><code>##       5%      95% 
-## 2.169814 3.742216</code></pre>
+## 1.798605 4.080585</code></pre>
 <div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="co">#MST, based on chi-square distribution</span></span>
 <span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a><span class="fu">buildConfInt</span>(R2lm, <span class="at">what =</span> <span class="st">&quot;MST&quot;</span>)</span></code></pre></div>
 <pre><code>##     2.5%    97.5% 
@@ -448,23 +450,22 @@ bootstrap .632 estimation of the MSE and jackknife estimation of the
 correlation:</p>
 <div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a>R2lm632jn <span class="ot">=</span> <span class="fu">R2oosse</span>(<span class="at">y =</span> Brassica<span class="sc">$</span>Pheno<span class="sc">$</span>Leaf_8_width, <span class="at">x =</span> Brassica<span class="sc">$</span>Expr[, <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>], </span>
 <span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>                    <span class="at">fitFun =</span> fitFunLM, <span class="at">predFun =</span> predFunLM, <span class="at">methodMSE =</span> <span class="st">&quot;bootstrap&quot;</span>,</span>
-<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a>                    <span class="at">methodCor =</span> <span class="st">&quot;jackknife&quot;</span>)</span></code></pre></div>
-<pre><code>## Fitting and evaluating the model once took 0.01 seconds.
-## You requested 200 .632 bootstrap instances with 2 cores, which is expected to last for roughly
-## 38.4 seconds</code></pre>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a>                    <span class="at">methodCor =</span> <span class="st">&quot;jackknife&quot;</span>, <span class="at">nFolds =</span> nFolds, <span class="at">cvReps =</span> cvReps, </span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a>                    <span class="at">nBootstrapsCor =</span> nBoots, <span class="at">cvRepsCor =</span> cvRepsCor)</span></code></pre></div>
 <p>Supplying a dataframe with predictor variables is not allowed. The
 user is asked to build the design matrix yourself with model.matrix
 prior to calling <em>R2oosse</em>:</p>
-<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a><span class="co">#We construct a fake data frame also containing genotypes</span></span>
-<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a>fakeDf <span class="ot">=</span> <span class="fu">data.frame</span>(Brassica<span class="sc">$</span>Expr[, <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>], <span class="st">&quot;genotype&quot;</span> <span class="ot">=</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="st">&quot;Genotype1&quot;</span>, <span class="st">&quot;Genotype2&quot;</span>, <span class="st">&quot;Genotype3&quot;</span>), <span class="at">replace =</span> <span class="cn">TRUE</span>, <span class="fu">nrow</span>(Brassica<span class="sc">$</span>Expr)))</span>
-<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a><span class="co">#Build the design matrix. The model.matrix variables automatically constructs dummy variables</span></span>
-<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a>designMatrix <span class="ot">=</span> <span class="fu">model.matrix</span>(<span class="sc">~</span> .  , <span class="at">data =</span> fakeDf)[, <span class="sc">-</span><span class="dv">1</span>] <span class="co">#Include no intercept as fitting function already does this</span></span>
-<span id="cb23-5"><a href="#cb23-5" tabindex="-1"></a><span class="co">#Now run oosse</span></span>
-<span id="cb23-6"><a href="#cb23-6" tabindex="-1"></a>R2modMat <span class="ot">=</span> <span class="fu">R2oosse</span>(<span class="at">y =</span> Brassica<span class="sc">$</span>Pheno<span class="sc">$</span>Leaf_8_width, <span class="at">x =</span> designMatrix, </span>
-<span id="cb23-7"><a href="#cb23-7" tabindex="-1"></a>                    <span class="at">fitFun =</span> fitFunLM, <span class="at">predFun =</span> predFunLM)</span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="co">#We construct a fake data frame also containing genotypes</span></span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>fakeDf <span class="ot">=</span> <span class="fu">data.frame</span>(Brassica<span class="sc">$</span>Expr[, <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>], <span class="st">&quot;genotype&quot;</span> <span class="ot">=</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="st">&quot;Genotype1&quot;</span>, <span class="st">&quot;Genotype2&quot;</span>, <span class="st">&quot;Genotype3&quot;</span>), <span class="at">replace =</span> <span class="cn">TRUE</span>, <span class="fu">nrow</span>(Brassica<span class="sc">$</span>Expr)))</span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a><span class="co">#Build the design matrix. The model.matrix variables automatically constructs dummy variables</span></span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a>designMatrix <span class="ot">=</span> <span class="fu">model.matrix</span>(<span class="sc">~</span> .  , <span class="at">data =</span> fakeDf)[, <span class="sc">-</span><span class="dv">1</span>] <span class="co">#Include no intercept as fitting function already does this</span></span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a><span class="co">#Now run oosse</span></span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a>R2modMat <span class="ot">=</span> <span class="fu">R2oosse</span>(<span class="at">y =</span> Brassica<span class="sc">$</span>Pheno<span class="sc">$</span>Leaf_8_width, <span class="at">x =</span> designMatrix, </span>
+<span id="cb22-7"><a href="#cb22-7" tabindex="-1"></a>                   <span class="at">nFolds =</span> nFolds, <span class="at">cvReps =</span> cvReps, <span class="at">nBootstrapsCor =</span> nBoots, </span>
+<span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a>               <span class="at">cvRepsCor =</span> cvRepsCor, <span class="at">fitFun =</span> fitFunLM, <span class="at">predFun =</span> predFunLM)</span></code></pre></div>
 <pre><code>## Fitting and evaluating the model once took 0 seconds.
-## You requested 200 repeats of 10-fold cross-validation with 2 cores, which is expected to last for roughly
-## 0 seconds</code></pre>
+## You requested 100 repeats of 5-fold cross-validation with 2 cores, which is expected to last for roughly
+## 5.3 seconds</code></pre>
 </div>
 <div id="regularised-linear-model" class="section level2" number="3.2">
 <h2><span class="header-section-number">3.2</span> Regularised linear
@@ -476,67 +477,58 @@ all genes. We use the <em>cv.glmnet</em> function from the
 tuning the penalty parameter. Following custom function definitions are
 needed to fit in with the naming convention of the <em>oosse</em>
 package.</p>
-<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a>fitFunReg <span class="ot">=</span> <span class="cf">function</span>(y, x, ...) {<span class="fu">cv.glmnet</span>(<span class="at">y =</span> y, <span class="at">x =</span> x, ...)}</span>
-<span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a>predFunReg <span class="ot">=</span> <span class="cf">function</span>(mod, x, ...){<span class="fu">predict</span>(mod, <span class="at">newx =</span> x, ...)}</span></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a>fitFunReg <span class="ot">=</span> <span class="cf">function</span>(y, x, ...) {<span class="fu">cv.glmnet</span>(<span class="at">y =</span> y, <span class="at">x =</span> x, ...)}</span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a>predFunReg <span class="ot">=</span> <span class="cf">function</span>(mod, x, ...){<span class="fu">predict</span>(mod, <span class="at">newx =</span> x, ...)}</span></code></pre></div>
 <p>We adapt the parameter settings a bit to reduce computation time of
 the vignette, it is recommended to use 10-fold cross-validation, at
 least 200 repeats of the cross-validation splits and 50 bootstrap
 replicates.</p>
-<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a>nFolds <span class="ot">=</span> <span class="dv">5</span>; cvReps <span class="ot">=</span> <span class="fl">1e2</span>; nBoots <span class="ot">=</span> <span class="fl">4e1</span>;numFeat <span class="ot">=</span> <span class="dv">25</span></span>
-<span id="cb26-2"><a href="#cb26-2" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">require</span>(glmnet)){</span>
-<span id="cb26-3"><a href="#cb26-3" tabindex="-1"></a>    <span class="cf">if</span>(onWindows <span class="ot">&lt;-</span> (.Platform<span class="sc">$</span>OS.type <span class="sc">==</span> <span class="st">&quot;windows&quot;</span>)){</span>
-<span id="cb26-4"><a href="#cb26-4" tabindex="-1"></a>        <span class="fu">clusterEvalQ</span>(Clus, <span class="fu">require</span>(glmnet))</span>
-<span id="cb26-5"><a href="#cb26-5" tabindex="-1"></a>    }</span>
-<span id="cb26-6"><a href="#cb26-6" tabindex="-1"></a>    R2pen <span class="ot">=</span> <span class="fu">R2oosse</span>(<span class="at">y =</span> Brassica<span class="sc">$</span>Pheno<span class="sc">$</span>Leaf_8_width, <span class="at">x =</span> Brassica<span class="sc">$</span>Expr[, <span class="fu">seq_len</span>(numFeat)], <span class="co">#Subset genes for speed</span></span>
-<span id="cb26-7"><a href="#cb26-7" tabindex="-1"></a>                    <span class="at">nFolds =</span> nFolds, <span class="at">cvReps =</span> cvReps, <span class="at">nBootstrapsCor =</span> nBoots,</span>
-<span id="cb26-8"><a href="#cb26-8" tabindex="-1"></a>                        <span class="at">fitFun =</span> fitFunReg, <span class="at">predFun =</span> predFunReg, <span class="at">alpha =</span> <span class="dv">1</span>)<span class="co">#Lasso model</span></span>
-<span id="cb26-9"><a href="#cb26-9" tabindex="-1"></a>    R2pen<span class="sc">$</span>R2</span>
-<span id="cb26-10"><a href="#cb26-10" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a>numFeat <span class="ot">=</span> <span class="dv">20</span>;</span>
+<span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">require</span>(glmnet)){</span>
+<span id="cb25-3"><a href="#cb25-3" tabindex="-1"></a>    R2pen <span class="ot">=</span> <span class="fu">R2oosse</span>(<span class="at">y =</span> Brassica<span class="sc">$</span>Pheno<span class="sc">$</span>Leaf_8_width, <span class="at">x =</span> Brassica<span class="sc">$</span>Expr[, <span class="fu">seq_len</span>(numFeat)], <span class="co">#Subset genes for speed</span></span>
+<span id="cb25-4"><a href="#cb25-4" tabindex="-1"></a>                    <span class="at">nFolds =</span> nFolds, <span class="at">cvReps =</span> cvReps, <span class="at">nBootstrapsCor =</span> nBoots, <span class="at">cvRepsCor =</span> cvRepsCor,</span>
+<span id="cb25-5"><a href="#cb25-5" tabindex="-1"></a>                        <span class="at">fitFun =</span> fitFunReg, <span class="at">predFun =</span> predFunReg, <span class="at">alpha =</span> <span class="dv">1</span>)<span class="co">#Lasso model</span></span>
+<span id="cb25-6"><a href="#cb25-6" tabindex="-1"></a>    R2pen<span class="sc">$</span>R2</span>
+<span id="cb25-7"><a href="#cb25-7" tabindex="-1"></a>}</span></code></pre></div>
 <pre><code>## Loading required package: glmnet</code></pre>
 <pre><code>## Loading required package: Matrix</code></pre>
-<pre><code>## Loaded glmnet 5.0</code></pre>
-<pre><code>## Fitting and evaluating the model once took 0.14 seconds.
+<pre><code>## Loaded glmnet 5.1</code></pre>
+<pre><code>## Fitting and evaluating the model once took 0.09 seconds.
 ## You requested 100 repeats of 5-fold cross-validation with 2 cores, which is expected to last for roughly
-## 3 minutes and 15.75 seconds</code></pre>
-<pre><code>##         R2       R2SE 
-## 0.62430284 0.08867925</code></pre>
+## 2 minutes and 5.87 seconds</code></pre>
+<pre><code>##        R2      R2SE 
+## 0.5121253 0.1594303</code></pre>
 </div>
 <div id="random-forest" class="section level2" number="3.3">
 <h2><span class="header-section-number">3.3</span> Random forest</h2>
 <p>As a final example we use a random forest as a prediction model. We
 use the implementation from the <em>randomForest</em> package.</p>
-<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">require</span>(randomForest)){</span>
-<span id="cb32-2"><a href="#cb32-2" tabindex="-1"></a>   <span class="cf">if</span>(onWindows){</span>
-<span id="cb32-3"><a href="#cb32-3" tabindex="-1"></a>        <span class="fu">clusterEvalQ</span>(Clus, <span class="fu">require</span>(randomForest))</span>
-<span id="cb32-4"><a href="#cb32-4" tabindex="-1"></a>    }</span>
-<span id="cb32-5"><a href="#cb32-5" tabindex="-1"></a>    fitFunrf <span class="ot">=</span> <span class="cf">function</span>(y, x, ...){<span class="fu">randomForest</span>(<span class="at">y =</span> y, x, ...)}</span>
-<span id="cb32-6"><a href="#cb32-6" tabindex="-1"></a>    predFunrf <span class="ot">=</span> <span class="cf">function</span>(mod, x, ...){<span class="fu">predict</span>(mod, x, ...)}</span>
-<span id="cb32-7"><a href="#cb32-7" tabindex="-1"></a>    R2rf <span class="ot">=</span> <span class="fu">R2oosse</span>(<span class="at">y =</span> Brassica<span class="sc">$</span>Pheno<span class="sc">$</span>Leaf_8_width, <span class="at">x =</span> Brassica<span class="sc">$</span>Expr[, <span class="fu">seq_len</span>(numFeat)],</span>
-<span id="cb32-8"><a href="#cb32-8" tabindex="-1"></a>                     <span class="at">nFolds =</span> nFolds, <span class="at">cvReps =</span> cvReps, <span class="at">nBootstrapsCor =</span> nBoots,</span>
-<span id="cb32-9"><a href="#cb32-9" tabindex="-1"></a>                        <span class="at">fitFun =</span> fitFunrf, <span class="at">predFun =</span> predFunrf)</span>
-<span id="cb32-10"><a href="#cb32-10" tabindex="-1"></a>    R2rf<span class="sc">$</span>R2</span>
-<span id="cb32-11"><a href="#cb32-11" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">require</span>(randomForest)){</span>
+<span id="cb31-2"><a href="#cb31-2" tabindex="-1"></a>    fitFunrf <span class="ot">=</span> <span class="cf">function</span>(y, x, ...){<span class="fu">randomForest</span>(<span class="at">y =</span> y, x, ...)}</span>
+<span id="cb31-3"><a href="#cb31-3" tabindex="-1"></a>    predFunrf <span class="ot">=</span> <span class="cf">function</span>(mod, x, ...){<span class="fu">predict</span>(mod, x, ...)}</span>
+<span id="cb31-4"><a href="#cb31-4" tabindex="-1"></a>    R2rf <span class="ot">=</span> <span class="fu">R2oosse</span>(<span class="at">y =</span> Brassica<span class="sc">$</span>Pheno<span class="sc">$</span>Leaf_8_width, <span class="at">x =</span> Brassica<span class="sc">$</span>Expr[, <span class="fu">seq_len</span>(numFeat)],</span>
+<span id="cb31-5"><a href="#cb31-5" tabindex="-1"></a>                     <span class="at">nFolds =</span> nFolds, <span class="at">cvReps =</span> cvReps, <span class="at">nBootstrapsCor =</span> nBoots,</span>
+<span id="cb31-6"><a href="#cb31-6" tabindex="-1"></a>                   <span class="at">cvRepsCor =</span> cvRepsCor, <span class="at">fitFun =</span> fitFunrf, <span class="at">predFun =</span> predFunrf)</span>
+<span id="cb31-7"><a href="#cb31-7" tabindex="-1"></a>    R2rf<span class="sc">$</span>R2</span>
+<span id="cb31-8"><a href="#cb31-8" tabindex="-1"></a>}</span></code></pre></div>
 <pre><code>## Loading required package: randomForest</code></pre>
 <pre><code>## randomForest 4.7-1.2</code></pre>
 <pre><code>## Type rfNews() to see new features/changes/bug fixes.</code></pre>
-<pre><code>## Fitting and evaluating the model once took 0.11 seconds.
+<pre><code>## Fitting and evaluating the model once took 0.06 seconds.
 ## You requested 100 repeats of 5-fold cross-validation with 2 cores, which is expected to last for roughly
-## 2 minutes and 24.45 seconds</code></pre>
-<pre><code>##         R2       R2SE 
-## 0.69905340 0.08206664</code></pre>
-<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" tabindex="-1"></a><span class="cf">if</span>(onWindows){</span>
-<span id="cb38-2"><a href="#cb38-2" tabindex="-1"></a>    <span class="fu">stopCluster</span>(Clus)</span>
-<span id="cb38-3"><a href="#cb38-3" tabindex="-1"></a>}</span></code></pre></div>
+## 1 minutes and 23.48 seconds</code></pre>
+<pre><code>##        R2      R2SE 
+## 0.6209468 0.1617288</code></pre>
 <p>The <span class="math inline">\(R^2\)</span> estimate is comparable
 to that of the penalised regression model.</p>
 </div>
 </div>
 <div id="session-info" class="section level1" number="4">
 <h1><span class="header-section-number">4</span> Session info</h1>
-<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
-<pre><code>## R version 4.6.1 (2026-06-24)
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div>
+<pre><code>## R version 4.6.2 (2026-10-29)
 ## Platform: x86_64-pc-linux-gnu
-## Running under: Ubuntu 24.04.4 LTS
+## Running under: Ubuntu 24.04.5 LTS
 ## 
 ## Matrix products: default
 ## BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
@@ -544,32 +536,32 @@ to that of the penalised regression model.</p>
 ## 
 ## locale:
 ##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
-##  [3] LC_TIME=de_BE.UTF-8        LC_COLLATE=C              
-##  [5] LC_MONETARY=de_BE.UTF-8    LC_MESSAGES=en_US.UTF-8   
-##  [7] LC_PAPER=de_BE.UTF-8       LC_NAME=C                 
+##  [3] LC_TIME=en_GB.UTF-8        LC_COLLATE=C              
+##  [5] LC_MONETARY=en_GB.UTF-8    LC_MESSAGES=en_US.UTF-8   
+##  [7] LC_PAPER=en_GB.UTF-8       LC_NAME=C                 
 ##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
-## [11] LC_MEASUREMENT=de_BE.UTF-8 LC_IDENTIFICATION=C       
+## [11] LC_MEASUREMENT=en_GB.UTF-8 LC_IDENTIFICATION=C       
 ## 
-## time zone: Europe/Busingen
+## time zone: Europe/Brussels
 ## tzcode source: system (glibc)
 ## 
 ## attached base packages:
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] randomForest_4.7-1.2 glmnet_5.0           Matrix_1.7-5        
-## [4] BiocParallel_1.46.0  oosse_1.0.12        
+## [1] randomForest_4.7-1.2 glmnet_5.1           Matrix_1.7-6        
+## [4] BiocParallel_1.46.0  oosse_1.0.13        
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] doParallel_1.0.17 cli_3.6.6         knitr_1.51        rlang_1.3.0      
-##  [5] xfun_0.59         otel_0.2.0        jsonlite_2.0.0    htmltools_0.5.9  
-##  [9] sass_0.4.10       rmarkdown_2.31    grid_4.6.1        evaluate_1.0.5   
+##  [1] doParallel_1.0.17 cli_3.6.6         knitr_1.52        rlang_1.3.0      
+##  [5] xfun_0.61         otel_0.2.0        jsonlite_2.0.0    htmltools_0.5.9  
+##  [9] sass_0.4.10       rmarkdown_2.32    grid_4.6.2        evaluate_1.0.5   
 ## [13] jquerylib_0.1.4   fastmap_1.2.0     foreach_1.5.2     yaml_2.3.12      
-## [17] lifecycle_1.0.5   compiler_4.6.1    codetools_0.2-20  Rcpp_1.1.2       
-## [21] rstudioapi_0.19.0 lattice_0.22-9    digest_0.6.39     R6_2.6.1         
-## [25] splines_4.6.1     shape_1.4.6.1     Rdpack_2.6.6      parallel_4.6.1   
-## [29] rbibutils_2.4.1   bslib_0.11.0      tools_4.6.1       iterators_1.0.14 
-## [33] survival_3.8-9    cachem_1.1.0</code></pre>
+## [17] lifecycle_1.0.5   compiler_4.6.2    codetools_0.2-20  Rcpp_1.1.2       
+## [21] rstudioapi_0.19.0 lattice_0.23-1    digest_0.6.39     R6_2.6.1         
+## [25] splines_4.6.2     shape_1.4.6.1     Rdpack_2.6.6      parallel_4.6.2   
+## [29] rbibutils_2.4.1   bslib_0.12.0      tools_4.6.2       iterators_1.0.14 
+## [33] survival_3.8-12   cachem_1.1.0</code></pre>
 </div>
 
 
